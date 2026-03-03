@@ -37,8 +37,9 @@ COPY . .
 ENV PATH="/opt/conda/bin:$PATH"
 ENV FLASK_APP=api.py
 
-# Expose the port Railway will provide
+# Expose the default port (Railway overrides via $PORT)
 EXPOSE 5000
 
 # Start the API using Gunicorn for production stability
-CMD ["micromamba", "run", "-n", "base", "gunicorn", "--bind", "0.0.0.0:5000", "api:app"]
+# Railway sets $PORT dynamically; default to 5000 for local dev
+CMD micromamba run -n base gunicorn --bind 0.0.0.0:${PORT:-5000} --timeout 300 --workers 1 api:app
