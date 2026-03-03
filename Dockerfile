@@ -5,7 +5,7 @@ USER root
 
 # Install system dependencies for CadQuery and OpenCASCADE
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
+    libgl1 \
     libglu1-mesa \
     libx11-6 \
     libxrender1 \
