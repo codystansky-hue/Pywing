@@ -39,18 +39,24 @@ def generate_wing_from_coords_api():
     data = request.json
     try:
         airfoil_coords = data.get('airfoil_coords', [])
-        span = float(data.get('span', 1500))
-        root_chord = float(data.get('root_chord', 250))
-        tip_chord = float(data.get('tip_chord', 120))
-        sweep_angle = float(data.get('sweep_angle', 0))
-        dihedral_angle = float(data.get('dihedral_angle', 0))
-        washout = float(data.get('washout', 0))
         num_sections = int(data.get('num_sections', 30))
         fmt = data.get('format', 'step').lower()
 
-        le_points, te_points = compute_le_te_points(
-            span, root_chord, tip_chord, sweep_angle, dihedral_angle, washout
-        )
+        # Accept le_points/te_points directly (multi-station mode)
+        if 'le_points' in data and 'te_points' in data:
+            le_points = [tuple(p) for p in data['le_points']]
+            te_points = [tuple(p) for p in data['te_points']]
+        else:
+            # Fall back to planform params for backward compatibility
+            span = float(data.get('span', 1500))
+            root_chord = float(data.get('root_chord', 250))
+            tip_chord = float(data.get('tip_chord', 120))
+            sweep_angle = float(data.get('sweep_angle', 0))
+            dihedral_angle = float(data.get('dihedral_angle', 0))
+            washout = float(data.get('washout', 0))
+            le_points, te_points = compute_le_te_points(
+                span, root_chord, tip_chord, sweep_angle, dihedral_angle, washout
+            )
 
         wing = create_wing_from_coords(airfoil_coords, le_points, te_points, num_sections)
         wing_bytes = export_wing(wing, fmt)
