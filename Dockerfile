@@ -27,7 +27,6 @@ RUN micromamba install -y -n base -c conda-forge \
     flask \
     flask-cors \
     gunicorn \
-    aerosandbox \
     && micromamba clean --all --yes
 
 # Copy project files
