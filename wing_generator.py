@@ -23,6 +23,32 @@ def _make_spline_bc():
     return ((1, 0.0), "not-a-knot")
 
 
+def _dedup_pts(pts, tol=1e-6):
+    """
+    Remove consecutive duplicate 3-D points (within tol distance).
+    Also removes the last point if it duplicates the first, since
+    makeSpline(periodic=True) closes the curve implicitly.
+    BSplCLib::Interpolate fails on duplicate parametrization values.
+    """
+    if not pts:
+        return pts
+    out = [pts[0]]
+    for p in pts[1:]:
+        dx = p[0] - out[-1][0]
+        dy = p[1] - out[-1][1]
+        dz = p[2] - out[-1][2]
+        if math.sqrt(dx*dx + dy*dy + dz*dz) > tol:
+            out.append(p)
+    # Drop last point if it equals the first (periodic spline closes itself)
+    if len(out) > 1:
+        dx = out[-1][0] - out[0][0]
+        dy = out[-1][1] - out[0][1]
+        dz = out[-1][2] - out[0][2]
+        if math.sqrt(dx*dx + dy*dy + dz*dz) <= tol:
+            out = out[:-1]
+    return out
+
+
 def _build_sections(airfoil_coords, le_points, te_points, num_sections):
     """
     Shared loft-section builder.
@@ -57,6 +83,7 @@ def _build_sections(airfoil_coords, le_points, te_points, num_sections):
 
         pts = [(lx + ax * chord, float(y), lz + az * chord)
                for ax, az in airfoil_coords]
+        pts = _dedup_pts(pts)
 
         section_pts = [cq.Vector(p) for p in pts]
         wire = cq.Wire.assembleEdges([cq.Edge.makeSpline(section_pts, periodic=True)])
@@ -170,6 +197,7 @@ def create_wing_with_root_tip(
             if twist_rad != 0.0:
                 r, s = r * cos_t - s * sin_t, r * sin_t + s * cos_t
             pts.append((lx + r, float(y), lz + s))
+        pts = _dedup_pts(pts)
 
         section_pts = [cq.Vector(p) for p in pts]
         wire = cq.Wire.assembleEdges([cq.Edge.makeSpline(section_pts, periodic=True)])
