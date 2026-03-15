@@ -140,7 +140,18 @@ def create_wing_with_root_tip(
     root_arr = np.array(root_coords, dtype=float)
     tip_arr  = np.array(tip_coords,  dtype=float)
 
-    # Resample to the same point count
+    # Downsample to keep STEP file size reasonable and avoid Rhino import crashes.
+    # High control-point counts (>100) produce enormous B-spline surfaces that
+    # overwhelm CAD importers.  100 points matches create_wing / create_wing_from_coords.
+    MAX_PTS = 100
+    if len(root_arr) > MAX_PTS:
+        idx = np.linspace(0, len(root_arr) - 1, MAX_PTS, dtype=int)
+        root_arr = root_arr[idx]
+    if len(tip_arr) > MAX_PTS:
+        idx = np.linspace(0, len(tip_arr) - 1, MAX_PTS, dtype=int)
+        tip_arr = tip_arr[idx]
+
+    # Resample to the same point count if root and tip differ
     N = min(len(root_arr), len(tip_arr))
     if len(root_arr) != N:
         idx = np.linspace(0, len(root_arr) - 1, N, dtype=int)
